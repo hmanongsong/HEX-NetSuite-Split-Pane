@@ -38,7 +38,11 @@ define([], () => {
     },
   };
 
+  let paneWidth = 0;
+
   const toggleSplitPane = (link, width = 50) => {
+    paneWidth = width;
+
     const pageLink = resolveURL(link);
     const leftPane = document.getElementById('left-pane');
 
@@ -48,7 +52,7 @@ define([], () => {
       updatePaneContent(pageLink);
     }
 
-    handlePaneDisplay(link, width);
+    handlePaneDisplay(link);
   };
 
   const buildSplitPane = (pageLink) => {
@@ -208,7 +212,7 @@ define([], () => {
     });
   };
 
-  const handlePaneDisplay = (link, width) => {
+  const handlePaneDisplay = (link) => {
     if (!link) {
       return;
     }
@@ -221,13 +225,13 @@ define([], () => {
     }
 
     // Slide pane to view
-    togglePaneView(leftPane, width);
+    togglePaneView(leftPane);
   };
 
-  const togglePaneView = (leftPane, width) => {
+  const togglePaneView = (leftPane) => {
     const mainBody = document.getElementById('body');
     const initialWidth = leftPane.offsetWidth;
-    const finalWidth = initialWidth === 0 ? (mainBody.offsetWidth * width) / 100 : 0;
+    const finalWidth = initialWidth === 0 ? (mainBody.offsetWidth * paneWidth) / 100 : 0;
     const startTime = performance.now();
 
     const animate = (currentTime) => {
@@ -246,13 +250,15 @@ define([], () => {
   };
 
   const generateLink = (label, pageLink, width = 50) => {
-    const clickHandler = getLinkClickHandler(pageLink, width);
+    paneWidth = width;
+
+    const clickHandler = getLinkClickHandler(pageLink);
 
     return `<a href="#" onclick="${clickHandler}">${label}</a>`;
   };
 
-  const getLinkClickHandler = (pageLink, width) =>
-    `event.preventDefault();require(['${CONFIG.PANE_LIB_PATH}'],(s)=>{try{s.toggleSplitPane('${pageLink}',${width})}catch(e){window.location='${pageLink}'}});`;
+  const getLinkClickHandler = (pageLink) =>
+    `event.preventDefault();require(['${CONFIG.PANE_LIB_PATH}'],(s)=>{try{s.toggleSplitPane('${pageLink}',${paneWidth})}catch(e){window.location='${pageLink}'}});`;
 
   const wrapAllElements = (target, wrapperId) => {
     const childElements = [...target.childNodes];
