@@ -253,8 +253,11 @@ define([], () => {
     paneWidth = width;
 
     const clickHandler = getLinkClickHandler(pageLink);
-
-    return `<a href="#" onclick="${clickHandler}">${label}</a>`;
+    
+    // Remove ifrmcntnr=T from URL, if existing
+    pageLink = pageLink.replace(/&ifrmcntnr=T/g, '');
+    
+    return `<a href="${pageLink}" onclick="${clickHandler}">${label}</a>`;
   };
 
   const getLinkClickHandler = (pageLink) =>
