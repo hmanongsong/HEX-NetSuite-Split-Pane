@@ -40,7 +40,7 @@ define([], () => {
 
   let paneWidth = 0;
 
-  const toggleSplitPane = (link, width = 50) => {
+  const openSplitPane = (link, width = 50) => {
     paneWidth = width;
 
     const pageLink = resolveURL(link);
@@ -253,15 +253,15 @@ define([], () => {
     paneWidth = width;
 
     const clickHandler = getLinkClickHandler(pageLink);
-    
+
     // Remove ifrmcntnr=T from URL, if existing
     pageLink = pageLink.replace(/&ifrmcntnr=T/g, '');
-    
+
     return `<a href="${pageLink}" onclick="${clickHandler}">${label}</a>`;
   };
 
   const getLinkClickHandler = (pageLink) =>
-    `event.preventDefault();require(['${CONFIG.PANE_LIB_PATH}'],(s)=>{try{s.toggleSplitPane('${pageLink}',${paneWidth})}catch(e){window.location='${pageLink}'}});`;
+    `event.preventDefault();require(['${CONFIG.PANE_LIB_PATH}'],(s)=>{try{s.openSplitPane('${pageLink}',${paneWidth})}catch(e){window.location='${pageLink}'}});`;
 
   const wrapAllElements = (target, wrapperId) => {
     const childElements = [...target.childNodes];
@@ -419,7 +419,7 @@ define([], () => {
   };
 
   return {
-    toggleSplitPane,
+    openSplitPane,
     generateLink,
   };
 });
