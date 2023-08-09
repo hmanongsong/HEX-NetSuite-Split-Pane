@@ -12,11 +12,11 @@ To use the NetSuite Split Pane Library, follow these steps:
 
 ## Usage
 
-The library provides two functions: `toggleSplitPane` and `generateLink`.
+The library provides two functions: `openSplitPane` and `generateLink`.
 
-### `toggleSplitPane`
+### `openSplitPane`
 
-The `toggleSplitPane` function serves as an internal mechanism within the library to control the visibility of the split pane view. However, it can also be utilized publicly in specific scenarios. One such use case is when a user intends to display a preview of the PDF for the current transaction upon page load. To achieve this, the user can invoke the `toggleSplitPane` function within the `pageInit` function of the record's client script. This function accepts two parameters:
+The `openSplitPane` function serves as an internal mechanism within the library to control the visibility of the split pane view. However, it can also be utilized publicly in specific scenarios. One such use case is when a user intends to display a preview of the PDF for the current transaction upon page load. To achieve this, the user can invoke the `openSplitPane` function within the `pageInit` function of the record's client script. This function accepts two parameters:
 
 1. The URL of the page to be displayed within the split pane.
 2. The width in percentage of the split pane on initial load. By default, this is set to 50.
@@ -38,8 +38,12 @@ define(['SuiteScripts/HEX_LIB_SplitPane.js'], (splitPane) => {
     const tranId = currentRecord.id;
     const pdfLink = `/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=101&id=${tranId}`;
 
-    // Set to 45% page width
-    splitPane.toggleSplitPane(pdfLink, 45);
+    try {
+      // Set to 45% page width
+      splitPane.openSplitPane(pdfLink, 45);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return {pageInit};
