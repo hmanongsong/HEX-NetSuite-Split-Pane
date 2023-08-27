@@ -30,29 +30,184 @@ The `generateLink` function is responsible for creating an HTML link anchor elem
 3. The width in percentage of the split pane on initial load. By default, this is set to 50.
 
 ## Examples
-### Displaying the PDF version of a transaction on page load
+
+### Use Case 1: Loading a preview of a transaction in PDF format on page load
 
 ```javascript
-define(['SuiteScripts/HEX_LIB_SplitPane.js'], (splitPane) => {
-  const pageInit = ({currentRecord}) => {
-    const tranId = currentRecord.id;
-    const pdfLink = `/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=101&id=${tranId}`;
+/**
+ * @NApiVersion 2.1
+ * @NScriptType UserEventScript
+ */
+define(['N/runtime'], (runtime) => {
+  /**
+   * Function definition to be triggered before the record is loaded.
+   *
+   * @param {Object} context
+   */
+  const beforeLoad = (context) => {
+    try {
+      instantiateSplitPane(context);
+    } catch (err) {
+      log.error({
+        title: err.name,
+        details: err.message,
+      });
+    }
+  };
+
+  /**
+   * Instantiates the Split Pane view through a User Event Script
+   *
+   * @param {Object} context
+   */
+  const instantiateSplitPane = (context) => {
+    if (runtime.executionContext !== runtime.ContextType.USER_INTERFACE) {
+      return;
+    }
+
+    const allowedTypes = [context.UserEventType.EDIT, context.UserEventType.VIEW];
+
+    if (context.type.includes(allowedTypes)) {
+      return;
+    }
+
+    const recordId = context.newRecord.id;
+    const pageLink = `/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=92&trantype=custinvc&&label=Invoice&printtype=transaction&id=${recordId}`;
+
+    const splitPaneHTML = context.form.addField({
+      id: 'custpage_hex_splitpane',
+      label: 'Split Pane',
+      type: 'inlinehtml',
+    });
+    splitPaneHTML.defaultValue = `
+      <script>
+        require(['SuiteScripts/HEX_LIB_SplitPane.js'], (splitPane) => {
+          splitPane.openSplitPane('${pageLink}', 30);
+        });
+      </script>`;
+  };
+  return {
+    beforeLoad,
+  };
+});
+```
+
+<img src="https://github.com/hmanongsong/HEX-NetSuite-Split-Pane/blob/main/assets/HEX_SplitPane_UE.gif" />
+
+### Use Case 2: Loading a record’s attachment in the split pane on button click
+
+User Event Script
+```javascript
+/**
+ * @NApiVersion 2.1
+ * @NScriptType UserEventScript
+ */
+
+define(['N/runtime'], (runtime) => {
+  /**
+   * Function definition to be triggered before record is loaded.
+   *
+   * @param {Object} context
+   */
+  const beforeLoad = (context) => {
+    try {
+      context.form.addButton({
+        id: 'custpage_hex_splitpane',
+        label: 'Open Most Recent Attachment',
+        functionName: 'openMostRecentAttachment',
+      });
+
+      context.form.clientScriptModulePath = 'SuiteScripts/HEX_CS_Invoice.js';
+    } catch (err) {
+      log.error({
+        title: err.name,
+        details: err.message,
+      });
+    }
+  };
+
+  return {
+    beforeLoad,
+  };
+});
+```
+
+Client Script
+```javascript
+/**
+ * @NApiVersion 2.1
+ * @NScriptType ClientScript
+ */
+
+define(['N/currentRecord', 'N/search', 'SuiteScripts/HEX_LIB_SplitPane.js'], (
+  currentRecord,
+  search,
+  splitPane
+) => {
+  /**
+   * Function to be executed after page is initialized.
+   *
+   * @param {Object} context
+   */
+  const openMostRecentAttachment = () => {
+    const currentRec = currentRecord.get();
+    const fileURL = getMostRecentAttachmentURL(currentRec.id);
 
     try {
-      // Set to 45% page width
-      splitPane.openSplitPane(pdfLink, 45);
+      splitPane.openSplitPane(fileURL);
     } catch (err) {
       console.log(err);
     }
   };
 
-  return {pageInit};
+  /**
+   * Retrieves the most recent attachment of the current invoice record
+   *
+   * @param {Object} context
+   */
+  const getMostRecentAttachmentURL = (invoiceId) => {
+    const fileSearch = search
+      .create({
+        type: search.Type.INVOICE,
+        filters: [
+          search.createFilter({
+            name: 'internalid',
+            operator: search.Operator.ANYOF,
+            values: [invoiceId],
+          }),
+          search.createFilter({
+            name: 'mainline',
+            operator: search.Operator.IS,
+            values: ['T'],
+          }),
+        ],
+        columns: [
+          search.createColumn({name: 'url', join: 'file'}),
+          search.createColumn({
+            name: 'created',
+            join: 'file',
+            sort: search.Sort.DESC,
+          }),
+        ],
+      })
+      .run()
+      .getRange({start: 0, end: 1});
+
+    const fileURL = fileSearch[0]?.getValue({name: 'url', join: 'file'});
+
+    return fileURL;
+  };
+
+  return {
+    pageInit: () => {},
+    openMostRecentAttachment,
+  };
 });
 ```
 
-<img src="https://github.com/hmanongsong/HEX-NetSuite-Split-Pane/blob/main/assets/HEX_SplitPane_PageInit.gif" />
+<img src="https://github.com/hmanongsong/HEX-NetSuite-Split-Pane/blob/main/assets/HEX_SplitPane_CS_UE.gif" />
 
-### Dynamically creating a link in a Suitelet which opens the transaction record
+### Use Case 3: Loading records in the split pane through a Suitelet link
 
 ```javascript
 searchObj.run().each((result) => {
