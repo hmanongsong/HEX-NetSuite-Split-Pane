@@ -34,7 +34,7 @@ define([], () => {
     NS_ELEMENT_ID: {
       BODY: 'body',
       PAGE_HEADER: 'div__header',
-      NAVBAR: 'n-w-header__navigation',
+      NAVBAR: '[data-header-section="navigation"]',
     },
   };
 
@@ -64,14 +64,16 @@ define([], () => {
   const restructureDOM = (pageLink) => {
     const mainBody = document.getElementById(CONFIG.NS_ELEMENT_ID.BODY);
     mainBody.style.display = 'flex';
+    mainBody.style.flexDirection = 'row';
 
     const rightPane = wrapAllElements(mainBody, 'right-pane');
+    rightPane.style.minWidth = 'unset';
     mainBody.appendChild(rightPane);
 
     const styleHTML = getStyleHTML(pageLink);
 
     const leftPaneHTML = /*html*/ `
-      <div id="left-pane">
+      <div id="left-pane" style="min-width: unset">
         <div id="left-pane-msg-container">
           <h1 id="left-pane-msg">No Preview Available</h1>
         </div>
@@ -86,7 +88,7 @@ define([], () => {
       </div>`;
 
     const barHTML = /*html*/ `
-      <div id="split-bar">
+      <div id="split-bar" style="min-width: unset">
         <div id="grip">
         <div id="tooltip">Double click this bar to open or close the split pane view, or drag it to adjust the size.</div>
         <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="white" id="pane-grip" viewBox="0 0 15 15">
@@ -276,7 +278,7 @@ define([], () => {
   };
 
   const getStyleHTML = (pageLink) => {
-    const navbar = document.getElementsByClassName(CONFIG.NS_ELEMENT_ID.NAVBAR)[0];
+    const navbar = document.querySelector(CONFIG.NS_ELEMENT_ID.NAVBAR)
 
     const barColor = navbar ? window.getComputedStyle(navbar).backgroundColor : '#444444';
 
